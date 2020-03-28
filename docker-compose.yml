@@ -28,9 +28,9 @@ services:
       - ADMIN_PASSWORD=${ERPNEXT_ADMIN_PWD}
       - ENCRYPTION_KEY=${ERPNEXT_ENCRYPTION_KEY}
       # Database setup
-      - DB_TYPE=postgres
+      - DB_TYPE=mariadb
       - DB_HOST=erpnext_db
-      - DB_PORT=5432
+      - DB_PORT=3306
       - DB_NAME=${ERPNEXT_DB_NAME}
       - DB_PASSWORD=${ERPNEXT_DB_PWD}
       - DB_ROOT_LOGIN=${ERPNEXT_DB_ROOT_LOGIN}
@@ -72,19 +72,18 @@ services:
       - erpnext_socketio
 
   erpnext_db:
-    image: postgres:10-alpine
+    image: mariadb:10
     container_name: erpnext_db
     #restart: always
-    stdin_open: true
-    tty: true
-    command: postgres -c 'max_connections=500'
+    command: --character_set_client=utf8 --bind-address=0.0.0.0 --character-set-client-handshake=FALSE --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --sql-mode="ALLOW_INVALID_DATES"
     environment:
-      - POSTGRES_USER=${ERPNEXT_DB_ROOT_LOGIN}
-      - POSTGRES_PASSWORD=${ERPNEXT_DB_ROOT_PWD}
+      - MYSQL_ROOT_PASSWORD=${ERPNEXT_DB_ROOT_PWD}
+      # Following parameters are not needed with Frappe 12 or higher since it will create DB itself
+      - MYSQL_DATABASE=${ERPNEXT_DB_NAME}
+      - MYSQL_USER=${ERPNEXT_DB_NAME}
+      - MYSQL_PASSWORD=${ERPNEXT_DB_PWD}
     volumes:
-      - /srv/erpnext/db/data:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
+      - /srv/erpnext/db:/var/lib/mysql
 
   erpnext_scheduler:
     # For development or CI, build from local Dockerfile
